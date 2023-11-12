@@ -59,7 +59,7 @@ _main() {
   }
 
   btrfs subvolume snapshot -r "${directory}/${subvolume}@live" \
-    "${directory}/${subvolume}+snapshots/$(date --utc +%Y%m%dT%H%M%SZ)@${tag}" || {
+    "${directory}/${subvolume}@snapshots/$(date --utc +%Y%m%dT%H%M%SZ)@${tag}" || {
     sudo -u caretakr \
       DISPLAY=:0 \
       DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
@@ -71,7 +71,7 @@ _main() {
 
   local count=1
 
-  for s in $(find "${directory}/${subvolume}+snapshots/*@${tag}" -maxdepth 0 -type d -printf "%f\n" | sort -nr); do
+  for s in $(find "${directory}/${subvolume}@snapshots/*@${tag}" -maxdepth 0 -type d -printf "%f\n" | sort -nr); do
     if [ "$count" -gt "$retention" ]; then
       btrfs subvolume delete "${directory}/${subvolume}@snapshots/${s}" || {
         sudo -u caretakr \

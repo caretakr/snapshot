@@ -48,37 +48,45 @@ _main() {
 
   trap _cleanup INT TERM EXIT
 
-  mount -o noatime,compress=zstd "$device" "$directory" || {
+  echo "Mounting device ${device} on directory ${directory} ..."
+
+  mount -o noatime,compress=zstd "/dev/disk/by-uuid/$device" "$directory" || {
     sudo -u caretakr \
       DISPLAY=:0 \
       DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
       notify-send -u critical "Snapshot failed" \
-      "Cannot mount ${device} on ${directory}"
+      "Cannot mount device ${device} on directory ${directory}"
     
     exit 1
   }
 
-  btrfs subvolume snapshot -r "${directory}/${subvolume}+live" \
-    "${directory}/${subvolume}+snapshots/$(date --utc +%Y%m%dT%H%M%SZ)+${tag}" || {
+  local snapshot="$(date --utc +%Y%m%dT%H%M%SZ)@${tag}"
+
+  echo "Creating snapshot ${snapshot} ..."
+
+  btrfs subvolume snapshot -r "${directory}/${subvolume}@live" \
+    "${directory}/${subvolume}@snapshots/$snapshot" || {
     sudo -u caretakr \
       DISPLAY=:0 \
       DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
       notify-send -u critical "Snapshot failed" \
-      "Cannot snapshot ${subvolume} [${tag}]"
+      "Cannot create snapshot ${snapshot}"
     
     exit 2
   }
 
   local count=1
 
-  for s in $(find "${directory}/${subvolume}+snapshots/*+${tag}" -maxdepth 0 -type d -printf "%f\n" | sort -nr); do
+  for s in $(find "${directory}/${subvolume}@snapshots/"*"@${tag}" -maxdepth 0 -type d -printf "%f\n" | sort -nr); do
     if [ "$count" -gt "$retention" ]; then
-      btrfs subvolume delete "${directory}/${subvolume}+snapshots/${s}" || {
+      echo "Deleting snapshot ${s} ..."
+
+      btrfs subvolume delete "${directory}/${subvolume}@snapshots/${s}" || {
         sudo -u caretakr \
           DISPLAY=:0 \
           DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
           notify-send -u critical "Snapshot failed" \
-          "Cannot delete ${subvolume} [${tag}] (retention)"
+          "Cannot delete snapshot ${s}"
 
         exit 3
       }
@@ -91,7 +99,7 @@ _main() {
     DISPLAY=:0 \
     DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
     notify-send -u low "Snapshot completed" \
-    "Created snapshot for ${subvolume} [${tag}]"
+    "Created ${tag} snapshot for ${subvolume}"
 
   exit 0
 }

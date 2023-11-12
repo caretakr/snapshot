@@ -71,7 +71,7 @@ _main() {
 
   local count=1
 
-  for s in $(find "${directory}/${subvolume}@snapshots/*@${tag}" -maxdepth 0 -type d -printf "%f\n" | sort -nr); do
+  for s in $(find "${directory}/${subvolume}@snapshots/"*"@${tag}" -maxdepth 0 -type d -printf "%f\n" | sort -nr); do
     if [ "$count" -gt "$retention" ]; then
       btrfs subvolume delete "${directory}/${subvolume}@snapshots/${s}" || {
         sudo -u caretakr \

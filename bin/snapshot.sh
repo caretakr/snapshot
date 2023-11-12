@@ -48,7 +48,7 @@ _main() {
 
   trap _cleanup INT TERM EXIT
 
-  mount -o noatime,compress=zstd "$device" "$directory" || {
+  mount -o noatime,compress=zstd "/dev/disk/by-uuid/$device" "$directory" || {
     sudo -u caretakr \
       DISPLAY=:0 \
       DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \

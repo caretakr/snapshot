@@ -98,7 +98,7 @@ _main() {
   sudo -u caretakr \
     DISPLAY=:0 \
     DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-    notify-send -u low "Snapshot completed" \
+    notify-send -u low -t 10000 "Snapshot completed" \
     "Created ${tag} snapshot for ${subvolume}"
 
   exit 0
